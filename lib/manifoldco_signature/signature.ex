@@ -111,8 +111,6 @@ defmodule ManifoldcoSignature.Signature do
         "#{canonized_method} #{path}#{canonized_query_string}#{@new_line}" <>
           "#{canonized_headers}#{@new_line}" <> "#{body}"
 
-      raise message
-
       signature_struct = %__MODULE__{
         date: date,
         endorsement: endorsement,
@@ -136,10 +134,15 @@ defmodule ManifoldcoSignature.Signature do
           | {:error, error_reason}
   def validate(signature, master_key, opts \\ []) do
     with :ok <- validate_not_expired(signature.date, opts),
-         true <-
-           Ed25519.valid_signature?(signature.public_key, signature.endorsement, master_key),
-         true <-
-           Ed25519.valid_signature?(signature.message, signature.signature, signature.public_key) do
+         {:ok, _message} <-
+           :enacl.sign_verify_detached(signature.endorsement, signature.public_key, master_key),
+         {:ok, _message} <-
+           :enacl.sign_verify_detached(
+             signature.signature,
+             signature.message,
+             signature.public_key
+           ) do
+      :ok
     else
       false ->
         reason = "Signature is invalid"
@@ -236,16 +239,15 @@ defmodule ManifoldcoSignature.Signature do
           {:ok, {signature, public_key, endorsement}}
           | {:error, error_reason}
   defp parse_signature(signature) do
-    case String.split(signature, " ") do
-      [signature_raw, public_key_raw, endorsement_raw] ->
-        signature = Base.url_decode64(signature_raw)
-        public_key = Base.url_decode64(public_key_raw)
-        endorsement = Base.url_decode64(endorsement_raw)
-
-        {:ok, {signature, public_key, endorsement}}
-
+    with [signature_raw, public_key_raw, endorsement_raw] <- String.split(signature, " "),
+         {:ok, signature} <- Base.url_decode64(signature_raw, padding: false),
+         {:ok, public_key} <- Base.url_decode64(public_key_raw, padding: false),
+         {:ok, endorsement} <- Base.url_decode64(endorsement_raw, padding: false) do
+      {:ok, {signature, public_key, endorsement}}
+    else
       _other ->
         message = "Signature header malformed"
+
         {:error, message}
     end
   end
