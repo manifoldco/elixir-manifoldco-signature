@@ -4,7 +4,39 @@ defmodule ManifoldcoSignatureTest do
 
   @raw_master_key "PY7wu3q3-adYr9-0ES6CMRixup9OjO5iL7EFDFpolhk"
 
-  describe "ManifoldcoSignature.validate/2" do
+  describe "ManifoldcoSignature.sign/6" do
+    test "success" do
+      method = "PUT"
+      path = "/v1/resources/2686c96868emyj61cgt2ma7vdntg4"
+      query_string = nil
+
+      headers = [
+        {"date", "2017-03-05T23:53:08Z"},
+        {"host", "127.0.0.1:4567"},
+        {"content-type", "application/json"},
+        {"content-length", "143"}
+      ]
+
+      body =
+        "{\"id\":\"2686c96868emyj61cgt2ma7vdntg4\",\"plan\":\"low\",\"product\":\"generators\",\"region\":\"aws::us-east-1\",\"user_id\":\"200e7aeg2kf2d6nud8jran3zxnz5j\"}\n"
+
+      {:ok, master_key} = Base.url_decode64(@raw_master_key, padding: false)
+
+      {:ok, new_headers} =
+        ManifoldcoSignature.Signature.sign(
+          method,
+          path,
+          query_string,
+          headers,
+          body,
+          master_key
+        )
+
+      assert new_headers == 1
+    end
+  end
+
+  describe "ManifoldcoSignature.validate/7" do
     test "success" do
       method = "PUT"
       path = "/v1/resources/2686c96868emyj61cgt2ma7vdntg4"
@@ -25,14 +57,15 @@ defmodule ManifoldcoSignatureTest do
 
       {:ok, back_then, _offset} = DateTime.from_iso8601("2017-03-05T23:53:08Z")
 
-      {:ok, signature} =
-        ManifoldcoSignature.Signature.build(method, path, query_string, headers, body)
-
       {:ok, master_key} = Base.url_decode64(@raw_master_key, padding: false)
 
       assert :ok =
                ManifoldcoSignature.Signature.validate(
-                 signature,
+                 method,
+                 path,
+                 query_string,
+                 headers,
+                 body,
                  master_key,
                  now: back_then
                )

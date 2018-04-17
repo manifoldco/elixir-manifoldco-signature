@@ -72,10 +72,10 @@ defmodule ManifoldcoSignature do
           :ok
           | {:error, error_reason}
   def verify(method, path, query_string, headers, body, master_key) do
-    with {:ok, signature} <- Signature.build(method, path, query_string, headers, body),
-         :ok <- Signature.validate(signature, master_key) do
-      :ok
-    else
+    case Signature.validate(method, path, query_string, headers, body, master_key) do
+      :ok ->
+        :ok
+
       {:error, _reason} = error_tuple ->
         error_tuple
     end
