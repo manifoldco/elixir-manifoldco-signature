@@ -27,17 +27,6 @@ defmodule ManifoldcoSignature.Signature do
   @type endorsement :: binary
 
   @typedoc """
-  User friendly error reason.
-  """
-  @type error_reason :: binary
-
-  @typedoc """
-  Master key provided by Manifold. This should be securely stored in your environment and
-  passed to `validate/2`.
-  """
-  @type master_key :: binary
-
-  @typedoc """
   The canonized request message to verify.
   """
   @type message :: binary
@@ -59,13 +48,6 @@ defmodule ManifoldcoSignature.Signature do
   @type canonized_headers :: binary
   @type canonized_method :: binary
   @type canonized_query_string :: binary
-  @type request_body :: nil | binary
-  @type request_header_key :: binary
-  @type request_header_value :: binary
-  @type request_headers :: [{request_header_key, request_header_value}]
-  @type request_method :: binary
-  @type request_path :: binary
-  @type request_query_string :: nil | binary
 
   #
   # module vars
@@ -89,14 +71,14 @@ defmodule ManifoldcoSignature.Signature do
   Builds a new signature from the provided request data.
   """
   @spec build(
-          request_method,
-          request_path,
-          request_query_string,
-          request_headers,
-          request_body
+          ManifoldcoSignature.request_method(),
+          ManifoldcoSignature.request_path(),
+          ManifoldcoSignature.request_query_string(),
+          ManifoldcoSignature.request_headers(),
+          ManifoldcoSignature.request_body()
         ) ::
           {:ok, t}
-          | {:error, error_reason}
+          | {:error, ManifoldcoSignature.error_reason()}
   def build(method, path, query_string, headers, body) do
     with canonized_method <- canonize_method(method),
          canonized_query_string <- canonize_query_string(query_string),
@@ -129,9 +111,9 @@ defmodule ManifoldcoSignature.Signature do
   @doc """
   Validates the signature (`t`) against the `master_key`.
   """
-  @spec validate(t, master_key, Keyword.t()) ::
+  @spec validate(t, ManifoldcoSignature.master_key(), Keyword.t()) ::
           :ok
-          | {:error, error_reason}
+          | {:error, ManifoldcoSignature.error_reason()}
   def validate(signature, master_key, opts \\ []) do
     with :ok <- validate_not_expired(signature.date, opts),
          {:ok, _message} <-
@@ -155,7 +137,7 @@ defmodule ManifoldcoSignature.Signature do
   #
 
   # Builds a canonical version of the headers as described by Manifold.
-  @spec canonize_headers(request_headers, [binary]) :: canonized_headers
+  @spec canonize_headers(ManifoldcoSignature.request_headers(), [binary]) :: canonized_headers
   defp canonize_headers(headers, signed_headers) do
     signed_headers
     |> Enum.concat([@signed_headers_key])
@@ -171,14 +153,15 @@ defmodule ManifoldcoSignature.Signature do
   end
 
   # Normalizes a request method as described in the Manifold docs by downcases the method.
-  @spec canonize_method(request_method) :: canonized_method
+  @spec canonize_method(ManifoldcoSignature.request_method()) :: canonized_method
   defp canonize_method(method) do
     String.downcase(method)
   end
 
   # Normalizes a query string as described in the Manifold docs by splitting each parameter,
   # sorting them, and then joining them back into a proper query string.
-  @spec canonize_query_string(request_query_string) :: canonized_query_string
+  @spec canonize_query_string(ManifoldcoSignature.request_query_string()) ::
+          canonized_query_string
   defp canonize_query_string(nil), do: nil
 
   defp canonize_query_string(query_string) do
@@ -192,9 +175,12 @@ defmodule ManifoldcoSignature.Signature do
   end
 
   # Headers should not have more than one value in the context of Manifold.
-  @spec fetch_first_header_value(request_headers, request_header_key) ::
-          {:ok, request_header_value}
-          | {:error, error_reason}
+  @spec fetch_first_header_value(
+          ManifoldcoSignature.request_headers(),
+          ManifoldcoSignature.request_header_key()
+        ) ::
+          {:ok, ManifoldcoSignature.request_header_value()}
+          | {:error, ManifoldcoSignature.error_reason()}
   defp fetch_first_header_value(headers, key) do
     case get_req_header(headers, key) do
       [value | _] ->
@@ -207,21 +193,24 @@ defmodule ManifoldcoSignature.Signature do
   end
 
   # Returns the values of the request header specified by `key`.
-  @spec get_req_header(request_headers, request_header_key) :: [request_header_value]
+  @spec get_req_header(
+          ManifoldcoSignature.request_headers(),
+          ManifoldcoSignature.request_header_key()
+        ) :: [ManifoldcoSignature.request_header_value()]
   defp get_req_header(headers, key) when is_binary(key) do
     for {k, v} <- headers, k == key, do: v
   end
 
   # Parses the signed headers valued provided in the `x-signed-headers` header.
-  @spec parse_signed_headers(request_header_value) :: [binary]
+  @spec parse_signed_headers(ManifoldcoSignature.request_header_value()) :: [binary]
   defp parse_signed_headers(signed_headers) do
     String.split(signed_headers, @signed_headers_delimiter)
   end
 
   # Parses a RFC3339 formatted date into a proper `DateTime.t`
-  @spec parse_date(request_header_value) ::
+  @spec parse_date(ManifoldcoSignature.request_header_value()) ::
           {:ok, DateTime.t()}
-          | {:error, error_reason}
+          | {:error, ManifoldcoSignature.error_reason()}
   defp parse_date(date_time_string) do
     case Timex.parse(date_time_string, @date_format) do
       {:ok, result} ->
@@ -235,9 +224,9 @@ defmodule ManifoldcoSignature.Signature do
 
   # Parses the Manifold provided signature from the `x-signature` header into
   # 3 base 64 decoded parts.
-  @spec parse_signature(request_header_value) ::
+  @spec parse_signature(ManifoldcoSignature.request_header_value()) ::
           {:ok, {signature, public_key, endorsement}}
-          | {:error, error_reason}
+          | {:error, ManifoldcoSignature.error_reason()}
   defp parse_signature(signature) do
     with [signature_raw, public_key_raw, endorsement_raw] <- String.split(signature, " "),
          {:ok, signature} <- Base.url_decode64(signature_raw, padding: false),
@@ -256,7 +245,7 @@ defmodule ManifoldcoSignature.Signature do
   # as defined by `@allowed_time_drift_seconds`.
   @spec validate_not_expired(DateTime.t(), Keyword.t()) ::
           :ok
-          | {:error, error_reason}
+          | {:error, ManifoldcoSignature.error_reason()}
   defp validate_not_expired(date, opts) do
     unix = DateTime.to_unix(date, :seconds)
     now = Keyword.get(opts, :now, DateTime.utc_now())

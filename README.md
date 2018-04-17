@@ -10,6 +10,7 @@ by adding `manifoldco_signature` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
+    # Required for the `manifoldco_signature` dependency.
     {:enacl, github: "jlouis/enacl", ref: "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4"}
     {:manifoldco_signature, "~> 0.0.1"}
   ]
