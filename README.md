@@ -37,3 +37,5 @@ be found at [https://hexdocs.pm/manifoldco_signature](https://hexdocs.pm/manifol
 This package was built by
 
 [![timber.io](http://res.cloudinary.com/timber/image/upload/v1490197244/pricing/logo-purple.png)](http://timber.io/)
+
+A Manifold logging provider.
