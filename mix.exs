@@ -68,9 +68,11 @@ defmodule ManifoldcoSignature.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:timex, "~> 3.2.1"},
+      {:earmark, "~> 1.2", only: [:dev, :docs]},
+      {:ex_doc, "~> 0.15", only: [:dev, :docs]},
       {:enacl,
-       github: "jlouis/enacl", ref: "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4", only: :test}
+       github: "jlouis/enacl", ref: "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4", only: :test},
+      {:timex, "~> 3.2.1"}
     ]
   end
 end
