@@ -69,7 +69,8 @@ defmodule ManifoldcoSignature.MixProject do
   defp deps do
     [
       {:timex, "~> 3.2.1"},
-      {:enacl, github: "jlouis/enacl", ref: "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4"}
+      {:enacl,
+       github: "jlouis/enacl", ref: "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4", only: :test}
     ]
   end
 end
