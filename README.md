@@ -10,14 +10,15 @@ by adding `manifoldco_signature` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
+    {:enacl, github: "jlouis/enacl", ref: "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4"}
     {:manifoldco_signature, "~> 0.0.1"}
   ]
 end
 ```
 
-Please note that this library uses a specific version of the
+Note that this library uses a specific version of the
 [enacl](https://github.com/jlouis/enacl) library. This is due to broken build requirements
-when trying to compile the libsodium bindings.
+when trying to compile the `libsodium` bindings.
 
 Oh, and you'll need `libsodium` to be installed on the host machine. If you're on mac you
 can do so via:
