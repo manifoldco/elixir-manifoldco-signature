@@ -68,9 +68,9 @@ defmodule ManifoldcoSignature.Signature do
   #
 
   @doc """
-  Validates the request via the x-signature header.
+  Verifies the request via the x-signature header.
   """
-  @spec validate(
+  @spec verify(
           ManifoldcoSignature.request_method(),
           ManifoldcoSignature.request_path(),
           ManifoldcoSignature.request_query_string(),
@@ -81,7 +81,7 @@ defmodule ManifoldcoSignature.Signature do
         ) ::
           :ok
           | {:error, ManifoldcoSignature.error_reason()}
-  def validate(method, path, query_string, headers, body, master_key, opts \\ []) do
+  def verify(method, path, query_string, headers, body, master_key, opts \\ []) do
     with {:ok, signed_headers_value} <- fetch_first_header_value(headers, @signed_headers_key),
          signed_headers <- parse_signed_headers(signed_headers_value),
          canonized_message <- canonize(method, path, query_string, signed_headers, headers, body),

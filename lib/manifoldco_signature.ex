@@ -61,7 +61,7 @@ defmodule ManifoldcoSignature do
   # Module vars
   #
 
-  @master_key "PtISNzqQmQPBxNlUw3CdxsWczXbIwyExxlkRqZ7E690"
+  @base64_encoded_master_key "PtISNzqQmQPBxNlUw3CdxsWczXbIwyExxlkRqZ7E690"
 
   #
   # API
@@ -83,9 +83,13 @@ defmodule ManifoldcoSignature do
           :ok
           | {:error, error_reason}
   def verify(method, path, query_string, headers, body, opts \\ []) do
-    master_key = Keyword.get(opts, :master_key, @master_key)
+    {master_key, opts} =
+      Keyword.pop_lazy(opts, :master_key, fn ->
+        {:ok, master_key} = Base.decode64(@base64_encoded_master_key, padding: false)
+        master_key
+      end)
 
-    case Signature.validate(method, path, query_string, headers, body, master_key) do
+    case Signature.verify(method, path, query_string, headers, body, master_key, opts) do
       :ok ->
         :ok
 
