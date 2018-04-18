@@ -52,6 +52,17 @@ defmodule ManifoldcoSignature do
   """
   @type request_query_string :: nil | binary
 
+  @typedoc """
+  Option that can be passed to `verify/6`.
+  """
+  @type verify_opt :: {:master_key, master_key}
+
+  #
+  # Module vars
+  #
+
+  @master_key "PtISNzqQmQPBxNlUw3CdxsWczXbIwyExxlkRqZ7E690"
+
   #
   # API
   #
@@ -67,15 +78,17 @@ defmodule ManifoldcoSignature do
           request_query_string,
           request_headers,
           request_body,
-          master_key
+          [verify_opt]
         ) ::
           :ok
           | {:error, error_reason}
-  def verify(method, path, query_string, headers, body, master_key) do
-    with {:ok, signature} <- Signature.build(method, path, query_string, headers, body),
-         :ok <- Signature.validate(signature, master_key) do
-      :ok
-    else
+  def verify(method, path, query_string, headers, body, opts \\ []) do
+    master_key = Keyword.get(opts, :master_key, @master_key)
+
+    case Signature.validate(method, path, query_string, headers, body, master_key) do
+      :ok ->
+        :ok
+
       {:error, _reason} = error_tuple ->
         error_tuple
     end

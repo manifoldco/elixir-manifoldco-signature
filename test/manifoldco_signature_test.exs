@@ -2,7 +2,7 @@ defmodule ManifoldcoSignatureTest do
   use ManifoldcoSignature.TestCase
   doctest ManifoldcoSignature
 
-  @raw_master_key "PY7wu3q3-adYr9-0ES6CMRixup9OjO5iL7EFDFpolhk"
+  @base_encoded_master_key "PY7wu3q3-adYr9-0ES6CMRixup9OjO5iL7EFDFpolhk"
 
   describe "ManifoldcoSignature.validate/2" do
     test "success" do
@@ -25,14 +25,15 @@ defmodule ManifoldcoSignatureTest do
 
       {:ok, back_then, _offset} = DateTime.from_iso8601("2017-03-05T23:53:08Z")
 
-      {:ok, signature} =
-        ManifoldcoSignature.Signature.build(method, path, query_string, headers, body)
-
-      {:ok, master_key} = Base.url_decode64(@raw_master_key, padding: false)
+      {:ok, master_key} = Base.url_decode64(@base_encoded_master_key, padding: false)
 
       assert :ok =
                ManifoldcoSignature.Signature.validate(
-                 signature,
+                 method,
+                 path,
+                 query_string,
+                 headers,
+                 body,
                  master_key,
                  now: back_then
                )

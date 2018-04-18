@@ -68,61 +68,34 @@ defmodule ManifoldcoSignature.Signature do
   #
 
   @doc """
-  Builds a new signature from the provided request data.
+  Validates the request via the x-signature header.
   """
-  @spec build(
+  @spec validate(
           ManifoldcoSignature.request_method(),
           ManifoldcoSignature.request_path(),
           ManifoldcoSignature.request_query_string(),
           ManifoldcoSignature.request_headers(),
-          ManifoldcoSignature.request_body()
+          ManifoldcoSignature.request_body(),
+          ManifoldcoSignature.master_key(),
+          Keyword.t()
         ) ::
-          {:ok, t}
+          :ok
           | {:error, ManifoldcoSignature.error_reason()}
-  def build(method, path, query_string, headers, body) do
-    with canonized_method <- canonize_method(method),
-         canonized_query_string <- canonize_query_string(query_string),
-         {:ok, signed_headers_header} <- fetch_first_header_value(headers, @signed_headers_key),
-         signed_headers <- parse_signed_headers(signed_headers_header),
-         canonized_headers <- canonize_headers(headers, signed_headers),
+  def validate(method, path, query_string, headers, body, master_key, opts \\ []) do
+    with {:ok, signed_headers_value} <- fetch_first_header_value(headers, @signed_headers_key),
+         signed_headers <- parse_signed_headers(signed_headers_value),
+         canonized_message <- canonize(method, path, query_string, signed_headers, headers, body),
          {:ok, date_header} <- fetch_first_header_value(headers, @date_header_key),
          {:ok, date} <- parse_date(date_header),
          {:ok, signature_header} <- fetch_first_header_value(headers, @signature_header_key),
-         {:ok, {signature, public_key, endorsement}} <- parse_signature(signature_header) do
-      message =
-        "#{canonized_method} #{path}#{canonized_query_string}#{@new_line}" <>
-          "#{canonized_headers}#{@new_line}" <> "#{body}"
-
-      signature_struct = %__MODULE__{
-        date: date,
-        endorsement: endorsement,
-        public_key: public_key,
-        signature: signature,
-        message: message
-      }
-
-      {:ok, signature_struct}
-    else
-      {:error, _reason} = error_tuple ->
-        error_tuple
-    end
-  end
-
-  @doc """
-  Validates the signature (`t`) against the `master_key`.
-  """
-  @spec validate(t, ManifoldcoSignature.master_key(), Keyword.t()) ::
-          :ok
-          | {:error, ManifoldcoSignature.error_reason()}
-  def validate(signature, master_key, opts \\ []) do
-    with :ok <- validate_not_expired(signature.date, opts),
-         {:ok, _message} <-
-           :enacl.sign_verify_detached(signature.endorsement, signature.public_key, master_key),
+         {:ok, {signature, public_key, endorsement}} <- parse_signature(signature_header),
+         :ok <- validate_not_expired(date, opts),
+         {:ok, _message} <- :enacl.sign_verify_detached(endorsement, public_key, master_key),
          {:ok, _message} <-
            :enacl.sign_verify_detached(
-             signature.signature,
-             signature.message,
-             signature.public_key
+             signature,
+             canonized_message,
+             public_key
            ) do
       :ok
     else
@@ -135,6 +108,15 @@ defmodule ManifoldcoSignature.Signature do
   #
   # Util (sorted alphabetically)
   #
+
+  defp canonize(method, path, query_string, signed_headers, headers, body) do
+    canonized_method = canonize_method(method)
+    canonized_query_string = canonize_query_string(query_string)
+    canonized_headers = canonize_headers(headers, signed_headers)
+
+    "#{canonized_method} #{path}#{canonized_query_string}#{@new_line}" <>
+      "#{canonized_headers}#{@new_line}" <> "#{body}"
+  end
 
   # Builds a canonical version of the headers as described by Manifold.
   @spec canonize_headers(ManifoldcoSignature.request_headers(), [binary]) :: canonized_headers
