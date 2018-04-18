@@ -85,7 +85,7 @@ defmodule ManifoldcoSignature do
   def verify(method, path, query_string, headers, body, opts \\ []) do
     {master_key, opts} =
       Keyword.pop_lazy(opts, :master_key, fn ->
-        {:ok, master_key} = Base.decode64(@base64_encoded_master_key, padding: false)
+        {:ok, master_key} = Base.url_decode64(@base64_encoded_master_key, padding: false)
         master_key
       end)
 
