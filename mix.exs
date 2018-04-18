@@ -7,7 +7,7 @@ defmodule ManifoldcoSignature.MixProject do
 
   @source_url "https://github.com/timberio/elixir-manifoldco-signature"
   @homepage_url "https://github.com/timberio/elixir-manifoldco-signature"
-  @version "0.0.3"
+  @version "1.0.0"
 
   def project do
     [

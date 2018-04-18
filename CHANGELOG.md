@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [1.0.0] - 2018-02-08
+
 ### Changed
 
   - Changed `ManifoldcoSignature.verify/6` to take options as the last argument. `:master_key`
@@ -23,4 +25,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Initial release
 
 
-[Unreleased]: https://github.com/timberio/odin/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/timberio/odin/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/timberio/odin/compare/v0.0.3...v1.0.0
