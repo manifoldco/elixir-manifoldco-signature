@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [1.0.4] - 2018-02-09
+
 ### Fixed
 
   - Handle blank query strings as nulls.
@@ -47,7 +49,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Initial release
 
 
-[Unreleased]: https://github.com/timberio/odin/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/timberio/odin/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/timberio/odin/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/timberio/odin/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/timberio/odin/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/timberio/odin/compare/v1.0.0...v1.0.1
