@@ -154,6 +154,8 @@ defmodule ManifoldcoSignature.Signature do
           canonized_query_string
   defp canonize_query_string(nil), do: nil
 
+  defp canonize_query_string(""), do: nil
+
   defp canonize_query_string(query_string) do
     canonized_query_string =
       query_string

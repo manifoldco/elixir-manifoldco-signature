@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+
+  - Handle blank query strings as nulls.
+
 ## [1.0.3] - 2018-02-09
 
 ### Added
