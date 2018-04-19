@@ -9,6 +9,8 @@ defmodule ManifoldcoSignature.Signature do
   @enforce_keys @all_keys
   defstruct @all_keys
 
+  require Logger
+
   #
   # typespecs (signature)
   #
@@ -99,9 +101,8 @@ defmodule ManifoldcoSignature.Signature do
            ) do
       :ok
     else
-      false ->
-        reason = "Signature is invalid"
-        {:error, reason}
+      {:error, _reason} = error_tuple ->
+        error_tuple
     end
   end
 
@@ -114,8 +115,15 @@ defmodule ManifoldcoSignature.Signature do
     canonized_query_string = canonize_query_string(query_string)
     canonized_headers = canonize_headers(headers, signed_headers)
 
-    "#{canonized_method} #{path}#{canonized_query_string}#{@new_line}" <>
-      "#{canonized_headers}#{@new_line}" <> "#{body}"
+    message =
+      "#{canonized_method} #{path}#{canonized_query_string}#{@new_line}" <>
+        "#{canonized_headers}#{@new_line}#{body}"
+
+    Logger.debug(fn ->
+      "[ManifoldcoSignature] Canonical request: #{inspect(message)}"
+    end)
+
+    message
   end
 
   # Builds a canonical version of the headers as described by Manifold.
@@ -210,15 +218,32 @@ defmodule ManifoldcoSignature.Signature do
           {:ok, {signature, public_key, endorsement}}
           | {:error, ManifoldcoSignature.error_reason()}
   defp parse_signature(signature) do
-    with [signature_raw, public_key_raw, endorsement_raw] <- String.split(signature, " "),
-         {:ok, signature} <- Base.url_decode64(signature_raw, padding: false),
-         {:ok, public_key} <- Base.url_decode64(public_key_raw, padding: false),
-         {:ok, endorsement} <- Base.url_decode64(endorsement_raw, padding: false) do
-      {:ok, {signature, public_key, endorsement}}
-    else
-      _other ->
-        message = "Signature header malformed"
+    case String.split(signature, " ") do
+      [signature_raw, public_key_raw, endorsement_raw] ->
+        Logger.debug(fn ->
+          "[ManifoldcoSignature] Signature: #{inspect(signature_raw)}"
+        end)
 
+        Logger.debug(fn ->
+          "[ManifoldcoSignature] Public key: #{inspect(public_key_raw)}"
+        end)
+
+        Logger.debug(fn ->
+          "[ManifoldcoSignature] Endorsement: #{inspect(endorsement_raw)}"
+        end)
+
+        with {:ok, signature} <- Base.url_decode64(signature_raw, padding: false),
+             {:ok, public_key} <- Base.url_decode64(public_key_raw, padding: false),
+             {:ok, endorsement} <- Base.url_decode64(endorsement_raw, padding: false) do
+          {:ok, {signature, public_key, endorsement}}
+        else
+          :error ->
+            message = "x-signature header part not properly base 64 url encoded"
+            {:error, message}
+        end
+
+      _else ->
+        message = "x-signature header malformed (not 3 parts delimited by space)"
         {:error, message}
     end
   end

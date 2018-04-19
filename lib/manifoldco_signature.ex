@@ -23,31 +23,46 @@ defmodule ManifoldcoSignature do
   @type master_key :: binary
 
   @typedoc """
+  The Base64 _decoded_ version of the master key. This should not be necessary to pass
+  except for testing purposes, as this library defaults to the Manifold public master key.
+  """
+  @type master_key_opt :: {:master_key, master_key}
+
+  @typedoc """
   The raw request body.
   """
   @type request_body :: nil | binary
 
+  @typedoc """
+  The key value of a request header.
+  """
   @type request_header_key :: binary
+
+  @typedoc """
+  The value of a request header.
+  """
   @type request_header_value :: binary
 
   @typedoc """
   Tuple form of the request headers, the default structure provided from `Plug.Conn.headers`.
+
+  All headers must have string values and should not be parsed or coerced.
   """
   @type request_headers :: [{request_header_key, request_header_value}]
 
   @typedoc """
-  String representation of the method, case insensitive. This library will normalize the
-  case as described in the Manifold docs.
+  String representation of the method, case insensitive. This library will normalize the case
+  to lower as described in the Manifold docs.
   """
   @type request_method :: binary
 
   @typedoc """
-  The raw request path with a leading /.
+  The raw request path with a leading `/`.
   """
   @type request_path :: binary
 
   @typedoc """
-  String representation of the URL query string (without the ?). This library will normalize
+  String representation of the URL query string (without the `?`). This library will normalize
   the order of the parameters as described in the Manifold documentation.
   """
   @type request_query_string :: nil | binary
@@ -55,7 +70,7 @@ defmodule ManifoldcoSignature do
   @typedoc """
   Option that can be passed to `verify/6`.
   """
-  @type verify_opt :: {:master_key, master_key}
+  @type verify_opt :: master_key_opt
 
   #
   # Module vars
