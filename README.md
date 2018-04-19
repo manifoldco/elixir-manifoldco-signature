@@ -87,6 +87,11 @@ defmodule ManifoldAuthorization do
 end
 ```
 
+**Warning**
+
+You must remove the `Plug.Parsers` plug in your `endpoint.ex` file since it reads the body,
+this makes it impossibel for the above manifold plug to read the body also.
+
 ## Credit
 
 This package was built by
